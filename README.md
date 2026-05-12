@@ -10,7 +10,7 @@
 
 IPWala is a free, open-source DNS and network analysis toolkit with a terminal-first interface. Think dnschecker.org, but it actually feels like a developer tool — not a 2010 web form.
 
-**Live Demo:** [ipwala.vercel.app](https://ipwala.vercel.app) (coming soon)
+**Live Demo:** [ipwala.vercel.app](https://ipwala.vercel.app)
 
 ## Features
 
