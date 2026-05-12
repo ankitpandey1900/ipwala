@@ -63,6 +63,9 @@ export async function whoisLookup(domain: string) {
   return fetchApi<{
     domainName: string;
     registrar: string;
+    registrant: string;
+    abuseEmail: string;
+    dnssec: string;
     createdDate: string;
     expiryDate: string;
     updatedDate: string;
