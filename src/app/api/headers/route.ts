@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { resolveAndCheckSSRF } from "@/lib/security";
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  let url = searchParams.get("url");
+  // 1. Rate Limit
+  const rateLimitResponse = checkRateLimit(request);
+  if (rateLimitResponse) return rateLimitResponse;
 
-  if (!url) {
+  const { searchParams } = new URL(request.url);
+  let rawUrl = searchParams.get("url");
+
+  if (!rawUrl) {
     return NextResponse.json(
       { success: false, error: "Missing url parameter" },
       { status: 400 }
@@ -12,16 +18,23 @@ export async function GET(request: NextRequest) {
   }
 
   // add protocol if missing
-  if (!url.startsWith("http://") && !url.startsWith("https://")) {
-    url = `https://${url}`;
+  if (!rawUrl.startsWith("http://") && !rawUrl.startsWith("https://")) {
+    rawUrl = `https://${rawUrl}`;
   }
 
   try {
+    // 2. Validation & SSRF Check
+    const parsedUrl = new URL(rawUrl);
+    const host = parsedUrl.hostname;
+    
+    // Check if it resolves to a private IP (acts as a gatekeeper)
+    await resolveAndCheckSSRF(host);
+
     const startTime = Date.now();
-    const res = await fetch(url, {
+    const res = await fetch(rawUrl, {
       method: "HEAD",
       redirect: "follow",
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(10000)
     });
     const responseTime = Date.now() - startTime;
 
@@ -36,7 +49,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        url,
+        url: rawUrl,
         statusCode: res.status,
         statusText: res.statusText,
         responseTime,
@@ -46,11 +59,11 @@ export async function GET(request: NextRequest) {
       },
       timestamp: Date.now(),
     });
-  } catch (err) {
+  } catch (err: any) {
     return NextResponse.json(
       {
         success: false,
-        error: err instanceof Error ? err.message : "Headers check failed",
+        error: err.message || "Headers check failed",
         timestamp: Date.now(),
       },
       { status: 500 }

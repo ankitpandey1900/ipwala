@@ -16,13 +16,22 @@ IPWala is a free, open-source DNS and network analysis toolkit with a terminal-f
 
 - 🔍 **DNS Lookup** — Query any DNS record type (A, AAAA, CNAME, MX, NS, TXT, SOA, etc.)
 - 🌐 **DNS Propagation** — Check propagation across global resolvers (Google, Cloudflare, Quad9)
-- 📧 **MX Records** — Check mail exchange servers
-- 🛡️ **TXT/SPF/DMARC** — Verify email security records
 - 📋 **WHOIS** — Universal WHOIS registration info via authoritative RDAP lookups
 - 📍 **IP Lookup** — Geolocation, ISP, and AS info
 - 🔒 **SSL Checker** — Verify HTTPS and security headers
 - 📡 **Ping Test** — Measure response times and connectivity
 - 📑 **HTTP Headers** — Inspect server response headers
+- 🛡️ **Blacklist Check** — Check if an IP/Domain is flagged for spam or malware
+- 🖧 **MAC Vendor** — Identify network equipment manufacturers
+- 🔎 **Subdomains** — Lightning-fast subdomain enumeration using HackerTarget
+- 🚪 **Port Scan** — Fast TCP port scanner for common services
+- 👤 **Whoami** — Instantly grab your public IP and user-agent details
+
+## Security First
+Built with production-grade security:
+- **SSRF Protection:** Resolves and blocks local/private IP mappings before scanning.
+- **Strict Validation:** Input sanitization using Zod schemas.
+- **Rate Limiting:** In-memory LRU rate-limiting to prevent abuse.
 
 ## Quick Start
 

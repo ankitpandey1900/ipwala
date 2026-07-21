@@ -37,6 +37,10 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  icons: {
+    icon: "/ip-icon.png",
+    apple: "/ip-icon.png",
+  },
 };
 
 export default function RootLayout({

@@ -10,6 +10,11 @@ export type CommandName =
   | "ping"
   | "headers"
   | "propagation"
+  | "scan"
+  | "subdomains"
+  | "blacklist"
+  | "mac"
+  | "whoami"
   | "help"
   | "clear";
 

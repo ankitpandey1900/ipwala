@@ -80,6 +80,46 @@ export const TOOLS: ToolConfig[] = [
     example: "headers https://vercel.com",
     icon: "Code",
   },
+  {
+    name: "scan",
+    label: "Port Scanner",
+    description: "Scan common ports on a host",
+    usage: "scan <host>",
+    example: "scan google.com",
+    icon: "Radio",
+  },
+  {
+    name: "subdomains",
+    label: "Subdomain Finder",
+    description: "Find subdomains for a domain",
+    usage: "subdomains <domain>",
+    example: "subdomains example.com",
+    icon: "Network",
+  },
+  {
+    name: "blacklist",
+    label: "Blacklist Checker",
+    description: "Check if an IP is on spam blacklists",
+    usage: "blacklist <ip>",
+    example: "blacklist 8.8.8.8",
+    icon: "ShieldAlert",
+  },
+  {
+    name: "mac",
+    label: "MAC Lookup",
+    description: "Identify vendor from a MAC address",
+    usage: "mac <address>",
+    example: "mac 00:1A:2B:3C:4D:5E",
+    icon: "Cpu",
+  },
+  {
+    name: "whoami",
+    label: "My IP & Location",
+    description: "Show your current IP and location",
+    usage: "whoami",
+    example: "whoami",
+    icon: "User",
+  },
 ];
 
 // DNS resolvers used for propagation checks

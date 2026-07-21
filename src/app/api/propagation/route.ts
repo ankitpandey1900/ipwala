@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { domainSchema } from "@/lib/validations";
 
 // check DNS propagation across multiple resolvers using Cloudflare's DoH gateway
 // each resolver is queried via Cloudflare's proxy which supports specifying upstream
@@ -19,16 +21,26 @@ const RESOLVERS: Resolver[] = [
 ];
 
 export async function GET(request: NextRequest) {
+  const rateLimitResponse = checkRateLimit(request);
+  if (rateLimitResponse) return rateLimitResponse;
+
   const { searchParams } = new URL(request.url);
-  const domain = searchParams.get("domain");
+  const rawDomain = searchParams.get("domain");
   const type = searchParams.get("type") || "A";
 
-  if (!domain) {
+  if (!rawDomain) {
     return NextResponse.json(
       { success: false, error: "Missing domain parameter" },
       { status: 400 }
     );
   }
+
+  const validation = domainSchema.safeParse(rawDomain);
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error.issues[0]?.message || "Invalid input" }, { status: 400 });
+  }
+
+  const domain = validation.data;
 
   const results = await Promise.allSettled(
     RESOLVERS.map(async (resolver) => {

@@ -120,3 +120,42 @@ export async function dnsPropagation(domain: string, type: string = "A") {
     }>;
   }>("propagation", { domain, type });
 }
+
+export async function portScan(host: string) {
+  return fetchApi<{
+    host: string;
+    ports: Array<{ port: number; status: string; service: string }>;
+  }>("scan", { host });
+}
+
+export async function findSubdomains(domain: string) {
+  return fetchApi<{
+    domain: string;
+    subdomains: string[];
+  }>("subdomains", { domain });
+}
+
+export async function checkBlacklist(ip: string) {
+  return fetchApi<{
+    ip: string;
+    blacklists: Array<{ name: string; listed: boolean }>;
+    isListed: boolean;
+  }>("blacklist", { ip });
+}
+
+export async function macLookup(mac: string) {
+  return fetchApi<{
+    mac: string;
+    vendor: string;
+  }>("mac", { mac });
+}
+
+export async function getWhoami() {
+  return fetchApi<{
+    ip: string;
+    city: string;
+    region: string;
+    country: string;
+    isp: string;
+  }>("whoami", {});
+}

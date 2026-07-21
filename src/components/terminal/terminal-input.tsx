@@ -131,7 +131,7 @@ export function TerminalInput({ onSubmit }: TerminalInputProps) {
         {/* custom blinking cursor overlay — positioned right after the text */}
         <div className="absolute inset-0 pointer-events-none text-sm font-mono flex items-center">
           <span className="invisible whitespace-pre">{value}</span>
-          <span className="w-[7px] h-[18px] bg-terminal-text/80 cursor-blink inline-block ml-px" />
+          <span className="w-[3px] h-[16px] bg-primary/90 rounded-full cursor-blink inline-block ml-[2px] shadow-[0_0_8px_var(--primary)]" />
         </div>
 
         {/* ghost suggestion */}

@@ -1,20 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { domainSchema } from "@/lib/validations";
 
 // Google DNS-over-HTTPS endpoint
 // this is free, no API key needed, and handles all record types
 const GOOGLE_DOH = "https://dns.google/resolve";
 
 export async function GET(request: NextRequest) {
+  const rateLimitResponse = checkRateLimit(request);
+  if (rateLimitResponse) return rateLimitResponse;
+
   const { searchParams } = new URL(request.url);
-  const domain = searchParams.get("domain");
+  const rawDomain = searchParams.get("domain");
   const type = searchParams.get("type") || "A";
 
-  if (!domain) {
+  if (!rawDomain) {
     return NextResponse.json(
       { success: false, error: "Missing domain parameter" },
       { status: 400 }
     );
   }
+
+  const validation = domainSchema.safeParse(rawDomain);
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error.issues[0]?.message || "Invalid input" }, { status: 400 });
+  }
+
+  const domain = validation.data;
 
   try {
     const res = await fetch(`${GOOGLE_DOH}?name=${encodeURIComponent(domain)}&type=${type}`, {

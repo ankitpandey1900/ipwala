@@ -1,26 +1,15 @@
 "use client";
 
-import { Terminal, Keyboard } from "lucide-react";
+import { Keyboard } from "lucide-react";
+import Image from "next/image";
 
 export function Header() {
   return (
     <header className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-border/20 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
-      <div className="flex items-center gap-2.5 group cursor-default">
-        {/* logo mark — minimalist & technical */}
-        <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-secondary/50 border border-border/50 group-hover:border-primary/50 transition-colors duration-300">
-          <Terminal className="w-5 h-5 text-primary" strokeWidth={2.5} />
+        {/* logo mark — using uploaded ip.png */}
+        <div className="flex items-center w-28 h-8 relative opacity-90 hover:opacity-100 transition-opacity mix-blend-screen">
+          <Image src="/ip.png" alt="IPWala Logo" fill className="object-contain object-left" priority />
         </div>
-
-        {/* wordmark — clean professional typography */}
-        <div className="flex items-center gap-1">
-          <span className="text-lg font-bold tracking-tighter text-foreground uppercase">
-            IP
-          </span>
-          <span className="text-lg font-light tracking-widest text-muted-foreground uppercase ml-0.5">
-            WALA
-          </span>
-        </div>
-      </div>
 
       <div className="flex items-center gap-4">
         {/* command hint */}

@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { domainSchema } from "@/lib/validations";
 
 /**
  * IPWala Universal WHOIS Resolver
@@ -38,15 +40,25 @@ const COMMON_RDAP: Record<string, string> = {
 const RDAP_REDIRECTOR = "https://rdap.org/domain";
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const domain = searchParams.get("domain")?.toLowerCase();
+  const rateLimitResponse = checkRateLimit(request);
+  if (rateLimitResponse) return rateLimitResponse;
 
-  if (!domain) {
+  const { searchParams } = new URL(request.url);
+  const rawDomain = searchParams.get("domain")?.toLowerCase();
+
+  if (!rawDomain) {
     return NextResponse.json(
       { success: false, error: "Missing domain parameter" },
       { status: 400 }
     );
   }
+
+  const validation = domainSchema.safeParse(rawDomain);
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error.issues[0]?.message || "Invalid input" }, { status: 400 });
+  }
+
+  const domain = validation.data;
 
   const tld = domain.split(".").pop() || "";
 

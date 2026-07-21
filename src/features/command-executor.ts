@@ -5,6 +5,7 @@ import { useTerminalStore } from "@/store/terminal-store";
 import {
   dnsLookup, ipLookup, whoisLookup, sslCheck,
   pingHost, httpHeaders, dnsPropagation,
+  portScan, findSubdomains, checkBlacklist, macLookup, getWhoami,
 } from "@/services/network";
 import { getTimestamp, formatDuration } from "@/lib/command-parser";
 import { TOOLS } from "@/lib/constants";
@@ -24,6 +25,16 @@ function header(title: string): LineEntry[] {
     out(`  ${title}`, "success"),
     out("  ─────────────────────────────────────────────────"),
   ];
+}
+
+function printError(title: string, errorMsg: string) {
+  const store = useTerminalStore.getState();
+  store.addLines([
+    out(""),
+    out(`  ✗ ${title}`, "error"),
+    out("  ─────────────────────────────────────────────────", "error"),
+    out(`  ${errorMsg}`, "error"),
+  ]);
 }
 
 export async function executeCommand(command: string, target: string, extraArgs: string[]) {
@@ -62,6 +73,21 @@ export async function executeCommand(command: string, target: string, extraArgs:
       case "propagation":
         await handlePropagation(target, extraArgs);
         break;
+      case "scan":
+        await handleScan(target);
+        break;
+      case "subdomains":
+        await handleSubdomains(target);
+        break;
+      case "blacklist":
+        await handleBlacklist(target);
+        break;
+      case "mac":
+        await handleMac(target);
+        break;
+      case "whoami":
+        await handleWhoami();
+        break;
       default: {
         const tool = TOOLS.find((t) => t.name === command);
         store.addLine(
@@ -95,7 +121,7 @@ async function handleDnsLookup(domain: string, args: string[]) {
   const result = await dnsLookup(domain, recordType);
 
   if (!result.success || !result.data) {
-    store.addLine(`  DNS lookup failed: ${result.error || "No data"}`, "error");
+    printError("DNS lookup Failed", result.error || "No data returned from the server.");
     return;
   }
 
@@ -125,7 +151,7 @@ async function handleMxLookup(domain: string) {
   const result = await dnsLookup(domain, "MX");
 
   if (!result.success || !result.data) {
-    store.addLine(`  MX lookup failed: ${result.error || "No data"}`, "error");
+    printError("MX lookup Failed", result.error || "No data returned from the server.");
     return;
   }
 
@@ -156,7 +182,7 @@ async function handleTxtLookup(domain: string) {
   const result = await dnsLookup(domain, "TXT");
 
   if (!result.success || !result.data) {
-    store.addLine(`  TXT lookup failed: ${result.error || "No data"}`, "error");
+    printError("TXT lookup Failed", result.error || "No data returned from the server.");
     return;
   }
 
@@ -197,7 +223,7 @@ async function handleWhois(domain: string) {
   const result = await whoisLookup(domain);
 
   if (!result.success || !result.data) {
-    store.addLine(`  WHOIS lookup failed: ${result.error || "No data"}`, "error");
+    printError("WHOIS lookup Failed", result.error || "No data returned from the server.");
     return;
   }
 
@@ -230,7 +256,7 @@ async function handleIpLookup(target: string) {
   const result = await ipLookup(target);
 
   if (!result.success || !result.data) {
-    store.addLine(`  IP lookup failed: ${result.error || "No data"}`, "error");
+    printError("IP lookup Failed", result.error || "No data returned from the server.");
     return;
   }
 
@@ -257,7 +283,7 @@ async function handleSslCheck(domain: string) {
   const result = await sslCheck(domain);
 
   if (!result.success || !result.data) {
-    store.addLine(`  SSL check failed: ${result.error || "No data"}`, "error");
+    printError("SSL check Failed", result.error || "No data returned from the server.");
     return;
   }
 
@@ -289,7 +315,7 @@ async function handlePing(host: string) {
   const result = await pingHost(host);
 
   if (!result.success || !result.data) {
-    store.addLine(`  Ping failed: ${result.error || "No data"}`, "error");
+    printError("Ping Failed", result.error || "No data returned from the server.");
     return;
   }
 
@@ -320,7 +346,7 @@ async function handleHeaders(url: string) {
   const result = await httpHeaders(url);
 
   if (!result.success || !result.data) {
-    store.addLine(`  Headers check failed: ${result.error || "No data"}`, "error");
+    printError("Headers check Failed", result.error || "No data returned from the server.");
     return;
   }
 
@@ -351,7 +377,7 @@ async function handlePropagation(domain: string, args: string[]) {
   const result = await dnsPropagation(domain, recordType);
 
   if (!result.success || !result.data) {
-    store.addLine(`  Propagation check failed: ${result.error || "No data"}`, "error");
+    printError("Propagation check Failed", result.error || "No data returned from the server.");
     return;
   }
 
@@ -373,6 +399,140 @@ async function handlePropagation(domain: string, args: string[]) {
       lines.push(out(`    No records returned`, "warning"));
     }
   }
+
+  store.addLines(lines);
+}
+
+async function handleScan(host: string) {
+  const store = useTerminalStore.getState();
+  store.addLine(`[${getTimestamp()}] Scanning common ports for ${host}...`, "info");
+
+  const result = await portScan(host);
+
+  if (!result.success || !result.data) {
+    printError("Port scan Failed", result.error || "No data returned from the server.");
+    return;
+  }
+
+  const lines: LineEntry[] = [
+    ...header(`Port Scan Results for ${host}`),
+  ];
+
+  const openPorts = result.data.ports.filter(p => p.status === "open");
+  const closedPorts = result.data.ports.filter(p => p.status === "closed");
+  const timeoutPorts = result.data.ports.filter(p => p.status === "timeout");
+
+  lines.push(out(`  ${"PORT".padEnd(10)} ${"STATE".padEnd(12)} SERVICE`));
+  lines.push(out("  " + "─".repeat(40)));
+
+  for (const p of result.data.ports) {
+    if (p.status === "open") {
+      lines.push(out(`  ${p.port.toString().padEnd(10)} ${p.status.padEnd(12)} ${p.service}`, "success"));
+    }
+  }
+
+  lines.push(out(""));
+  lines.push(out(`  ${openPorts.length} open, ${closedPorts.length} closed, ${timeoutPorts.length} filtered/timeout`, "info"));
+
+  store.addLines(lines);
+}
+
+async function handleSubdomains(domain: string) {
+  const store = useTerminalStore.getState();
+  store.addLine(`[${getTimestamp()}] Finding subdomains for ${domain}...`, "info");
+
+  const result = await findSubdomains(domain);
+
+  if (!result.success || !result.data) {
+    printError("Subdomain search Failed", result.error || "No data returned from the server.");
+    return;
+  }
+
+  const { subdomains } = result.data;
+  const lines: LineEntry[] = [
+    ...header(`Subdomains for ${domain}`),
+  ];
+
+  if (subdomains.length === 0) {
+    lines.push(out(`  No subdomains found in CT logs.`, "warning"));
+  } else {
+    for (const sub of subdomains) {
+      lines.push(out(`  • ${sub}`));
+    }
+    lines.push(out(""));
+    lines.push(out(`  Found ${subdomains.length} subdomain(s)`, "info"));
+  }
+
+  store.addLines(lines);
+}
+
+async function handleBlacklist(ip: string) {
+  const store = useTerminalStore.getState();
+  store.addLine(`[${getTimestamp()}] Checking blacklists for ${ip}...`, "info");
+
+  const result = await checkBlacklist(ip);
+
+  if (!result.success || !result.data) {
+    printError("Blacklist check Failed", result.error || "No data returned from the server.");
+    return;
+  }
+
+  const { isListed, blacklists } = result.data;
+  const statusType: LineType = isListed ? "error" : "success";
+  const lines: LineEntry[] = [
+    ...header(`DNSBL Check for ${ip}`),
+    out(`  Status: ${isListed ? "LISTED ✗" : "CLEAN ✓"}`, statusType),
+    out(""),
+    out("  Providers checked:", "info"),
+  ];
+
+  for (const bl of blacklists) {
+    const icon = bl.listed ? "✗" : "✓";
+    const type: LineType = bl.listed ? "error" : "success";
+    lines.push(out(`    ${icon} ${bl.name}`, type));
+  }
+
+  store.addLines(lines);
+}
+
+async function handleMac(mac: string) {
+  const store = useTerminalStore.getState();
+  store.addLine(`[${getTimestamp()}] Looking up MAC address ${mac}...`, "info");
+
+  const result = await macLookup(mac);
+
+  if (!result.success || !result.data) {
+    printError("MAC lookup Failed", result.error || "No data returned from the server.");
+    return;
+  }
+
+  const lines: LineEntry[] = [
+    ...header(`MAC Address Details`),
+    out(`  MAC Address:  ${result.data.mac}`),
+    out(`  Vendor:       ${result.data.vendor}`, "success"),
+  ];
+
+  store.addLines(lines);
+}
+
+async function handleWhoami() {
+  const store = useTerminalStore.getState();
+  store.addLine(`[${getTimestamp()}] Retrieving your IP and location...`, "info");
+
+  const result = await getWhoami();
+
+  if (!result.success || !result.data) {
+    printError("Whoami Failed", result.error || "No data returned from the server.");
+    return;
+  }
+
+  const d = result.data;
+  const lines: LineEntry[] = [
+    ...header(`Whoami Data`),
+    out(`  IP Address: ${d.ip}`, "success"),
+    out(`  Location:   ${d.city}, ${d.region}, ${d.country}`),
+    out(`  ISP:        ${d.isp}`),
+  ];
 
   store.addLines(lines);
 }

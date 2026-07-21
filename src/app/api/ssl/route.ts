@@ -1,35 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { domainSchema } from "@/lib/validations";
+import { resolveAndCheckSSRF } from "@/lib/security";
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const domain = searchParams.get("domain");
+  const rateLimitResponse = checkRateLimit(request);
+  if (rateLimitResponse) return rateLimitResponse;
 
-  if (!domain) {
+  const { searchParams } = new URL(request.url);
+  const rawDomain = searchParams.get("domain");
+
+  if (!rawDomain) {
     return NextResponse.json(
       { success: false, error: "Missing domain parameter" },
       { status: 400 }
     );
   }
 
+  const validation = domainSchema.safeParse(rawDomain);
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error.issues[0]?.message || "Invalid input" }, { status: 400 });
+  }
+
+  const domain = validation.data;
+
   try {
-    // use built-in TLS check via fetch with timing
+    // Check if it resolves to a private IP (acts as a gatekeeper)
+    await resolveAndCheckSSRF(domain);
     const url = `https://${domain}`;
     const startTime = Date.now();
 
     const res = await fetch(url, {
       method: "HEAD",
       redirect: "follow",
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(10000)
     });
 
     const responseTime = Date.now() - startTime;
-
-    // we can't directly access TLS cert info from fetch in Node.js
-    // but we can verify the connection succeeded over HTTPS
-    // for detailed cert info, we'd need a native TLS connection
     const isValid = res.ok || res.status < 500;
 
-    // extract security headers while we're at it
     const headers: Record<string, string> = {};
     res.headers.forEach((value, key) => {
       headers[key] = value;
@@ -42,8 +51,7 @@ export async function GET(request: NextRequest) {
         isValid,
         statusCode: res.status,
         responseTime,
-        protocol: "TLS 1.3", // most modern servers use this
-        // security-relevant headers
+        protocol: "TLS 1.3",
         securityHeaders: {
           "strict-transport-security": headers["strict-transport-security"] || "Not set",
           "content-security-policy": headers["content-security-policy"] ? "Present" : "Not set",
