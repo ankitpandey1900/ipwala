@@ -3,8 +3,8 @@ import type { ToolConfig } from "@/types";
 export const APP_NAME = "IPWala";
 export const APP_DESCRIPTION =
   "Modern DNS & Network Toolkit — built for developers who prefer the terminal.";
-export const APP_URL = "https://ipwala.dev";
-export const APP_VERSION = "0.1.0";
+export const APP_URL = "https://ipwala.vercel.app";
+export const APP_VERSION = "1.1.0";
 
 // tool definitions — used for command parsing, help text, sidebar
 export const TOOLS: ToolConfig[] = [
