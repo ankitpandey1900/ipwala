@@ -30,8 +30,8 @@ export const TerminalLine = memo(function TerminalLine({ line }: { line: TLine }
   // system messages (welcome banner, ASCII art)
   if (line.type === "system") {
     return (
-      <div className="text-terminal-muted font-mono select-none py-0">
-        <pre className="whitespace-pre font-mono text-xs leading-relaxed">{line.content}</pre>
+      <div className="text-terminal-muted font-mono select-none py-0 w-full overflow-x-hidden">
+        <pre className="whitespace-pre font-mono text-[8px] sm:text-[10px] md:text-xs leading-relaxed">{line.content}</pre>
       </div>
     );
   }
