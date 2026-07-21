@@ -27,11 +27,6 @@ IPWala is a free, open-source DNS and network analysis toolkit with a terminal-f
 - 🚪 **Port Scan** — Fast TCP port scanner for common services
 - 👤 **Whoami** — Instantly grab your public IP and user-agent details
 
-## Security First
-Built with production-grade security:
-- **SSRF Protection:** Resolves and blocks local/private IP mappings before scanning.
-- **Strict Validation:** Input sanitization using Zod schemas.
-- **Rate Limiting:** In-memory LRU rate-limiting to prevent abuse.
 
 ## Quick Start
 
