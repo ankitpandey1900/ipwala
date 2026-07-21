@@ -1,0 +1,47 @@
+# IPWala System Documentation
+
+## Overview
+IPWala is a high-performance, terminal-native toolkit for DNS querying, network reconnaissance, and infrastructure debugging. It provides a UNIX-style command-line interface within a modern web browser.
+
+## Architecture
+- **Frontend**: Next.js 16, React, Tailwind CSS, Zustand (state management).
+- **Backend**: Next.js Edge API routes for executing network operations.
+- **UI Paradigm**: Terminal emulator with a command parser, history tracking, and specialized rendering for network data.
+
+## Features & Commands
+The platform supports 14 core diagnostic commands, which can be executed via the terminal UI or programmatically via the underlying REST API.
+
+1. `lookup <domain> [type]` : Queries DNS records (A, AAAA, CNAME, TXT, NS).
+2. `propagation <domain> [type]` : Checks global DNS propagation across multiple geographic resolvers.
+3. `whois <domain>` : Retrieves domain registration and RDAP data.
+4. `ip <address>` : Resolves IP geolocation, ISP, and ASN.
+5. `mx <domain>` : Checks Mail Exchange (MX) records.
+6. `txt <domain>` : Extracts TXT, SPF, and DMARC security policies.
+7. `ssl <domain>` : Inspects TLS/SSL certificates and HTTP security headers.
+8. `ping <host>` : Measures ICMP latency and packet loss.
+9. `headers <url>` : Fetches raw HTTP response headers.
+10. `scan <host>` : Performs a fast TCP port scan (common ports).
+11. `subdomains <domain>` : Enumerates subdomains using Certificate Transparency (CT) logs.
+12. `blacklist <ip>` : Checks IPs against global DNSBL spam/malware databases.
+13. `mac <address>` : Looks up MAC address Organizationally Unique Identifiers (OUI).
+14. `whoami` : Retrieves the client's public IP, User-Agent, and geolocation.
+
+## API Documentation
+All backend functionality is exposed via Next.js API routes located at `/api/<command>`.
+- Method: `GET` or `POST` (varies by route).
+- Request Payload (POST): `{"target": "<domain_or_ip>"}`
+- Example Response:
+  ```json
+  {
+    "success": true,
+    "data": { ... }
+  }
+  ```
+
+## Security Posture
+- All API routes strictly validate domains and IP addresses to prevent SSRF (Server-Side Request Forgery).
+- Internal IP addresses (e.g., 10.0.0.0/8, 192.168.0.0/16, 127.0.0.0/8) are blocked by the backend API executor.
+- Shell injection is mitigated by using native Node.js libraries (`dns`, HTTP fetch) rather than wrapping OS-level binaries.
+
+## Design Philosophy
+IPWala emphasizes a zero-friction developer experience. The interface deliberately mimics a physical terminal, utilizing monospaced typography, strict keyboard accessibility, and immediate visual feedback. It is built for network administrators, security researchers, and software engineers.

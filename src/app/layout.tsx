@@ -54,6 +54,25 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
+        {/* JSON-LD Structured Data for AI & Search Engines */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebApplication",
+              "name": APP_NAME,
+              "url": APP_URL,
+              "description": APP_DESCRIPTION,
+              "applicationCategory": "DeveloperApplication",
+              "operatingSystem": "Any",
+              "offers": {
+                "@type": "Offer",
+                "price": "0"
+              }
+            })
+          }}
+        />
         <TooltipProvider>
           {children}
         </TooltipProvider>
