@@ -73,7 +73,7 @@ export function Terminal() {
         return;
       }
 
-      if (parsed.args.length === 0) {
+      if (parsed.args.length === 0 && parsed.command !== "whoami") {
         const tool = TOOLS.find((t) => t.name === parsed.command);
         if (tool) {
           addLine(`Usage: ${tool.usage}`, "warning");
@@ -82,19 +82,29 @@ export function Terminal() {
         return;
       }
 
-      const target =
-        parsed.command === "headers"
-          ? parsed.args[0]
-          : extractDomain(parsed.args[0]);
+      let target = "";
+      if (parsed.command !== "whoami") {
+        target =
+          parsed.command === "headers" || parsed.command === "mac"
+            ? parsed.args[0]
+            : extractDomain(parsed.args[0]);
 
-      if (parsed.command === "ip") {
-        if (!isValidIP(target) && !isValidDomain(target)) {
-          addLine(`Invalid IP address or hostname: '${target}'`, "error");
+        if (
+          parsed.command === "ip" ||
+          parsed.command === "ping" ||
+          parsed.command === "scan" ||
+          parsed.command === "blacklist"
+        ) {
+          if (!isValidIP(target) && !isValidDomain(target)) {
+            addLine(`Invalid IP address or hostname: '${target}'`, "error");
+            return;
+          }
+        } else if (parsed.command === "mac") {
+          // mac handles its own validation in the backend api
+        } else if (parsed.command !== "headers" && !isValidDomain(target)) {
+          addLine(`Invalid domain: '${target}'`, "error");
           return;
         }
-      } else if (parsed.command !== "headers" && !isValidDomain(target)) {
-        addLine(`Invalid domain: '${target}'`, "error");
-        return;
       }
 
       await executeCommand(parsed.command, target, parsed.args.slice(1));
